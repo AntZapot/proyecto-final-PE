@@ -1,9 +1,11 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
 #include <stdbool.h>
 
 int menu();
 int imprimir_tablero(char tablero[3][3]);
-int registrar_tirada(char tablero[3][3]);
+int registrar_tirada(char tablero[3][3], bool *apt_turno);
 int comprobar_tablero(char tablero[3][3]);
 
 int modo_un_jugador(char tablero[3][3]);
@@ -15,8 +17,8 @@ int main(int argc, char const *argv[])
 {
     char matriz[3][3] = 
         {   
-            {'x', ' ', ' '},
-            {' ', 'x', ' '},
+            {' ', ' ', ' '},
+            {' ', ' ', ' '},
             {' ', ' ', ' '}
         };
 
@@ -59,19 +61,38 @@ int imprimir_tablero(char tablero[3][3]) {
     return 0;
 }
 
-int registrar_tirada(char tablero[3][3]) {
-    int columna, fila;
-    printf("¿Donde desea tirar?\nNumero de columna:\n");
-    scanf("%d", &columna);
-    printf("Numero de fila:\n");
-    scanf("%d", &fila);
+int registrar_tirada(char tablero[3][3], bool *apt_turno) {
 
-    if(tablero[columna][fila] == ' ') 
+    if(*apt_turno == true) 
     {
-        tablero[columna][fila] = 'x';
+        int columna, fila, error = 0;
+        
+        do
+        {
+            if(error)
+            {
+                printf("Posicion invalida,\n");
+                imprimir_tablero(tablero);
+            }
+            printf("¿Donde desea tirar?\nNumero de columna:\n");
+            scanf("%d", &columna);
+            printf("Numero de fila:\n");
+            scanf("%d", &fila);
+            error = 1;
+        } while (tablero[fila][columna] != ' ');
+        tablero[fila][columna] = 'x';
+        *apt_turno = false;
     }else 
     {
-        printf("Posicion invalida\n");
+        int r_columna, r_fila;
+        do
+        {
+            srand (time(NULL)); 
+            r_columna = rand() % 3;
+            r_fila = rand() % 3;
+        } while (tablero[r_fila][r_columna] != ' ');
+        tablero[r_fila][r_columna] = 'o';
+        *apt_turno = true;
     }
     return 0;
 }
@@ -94,6 +115,10 @@ int comprobar_tablero(char tablero[3][3]){
             {
                 terminado = true;
             }
+            if(tablero[i][j] == tablero[i+1][j-1] && tablero[i][j] == tablero[i+2][j-2] && tablero[i][j] != ' ')
+            {
+                terminado = true;   
+            }
         }
     }
     if(terminado) 
@@ -107,11 +132,13 @@ int comprobar_tablero(char tablero[3][3]){
 }
 
 int modo_un_jugador(char tablero[3][3]) {
+    bool turno_jugador = true;
     printf("Modo un jugador seleccionado\n");
     do
     {
         imprimir_tablero(tablero);
-        registrar_tirada(tablero);
+        printf("\n");
+        registrar_tirada(tablero, &turno_jugador);
     } while (!comprobar_tablero(tablero));
     imprimir_tablero(tablero);
 }
