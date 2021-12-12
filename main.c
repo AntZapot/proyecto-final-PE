@@ -3,13 +3,17 @@
 #include <time.h>
 #include <stdbool.h>
 
-int menu();
-int imprimir_tablero(char tablero[3][3]);
-int registrar_tirada(char tablero[3][3], bool *apt_turno, int modo);
-int comprobar_tablero(char tablero[3][3]);
+#define COLOR_CYAN "\x1b[36m"
+#define COLOR_RESET "\x1b[0m"
+#define COLOR_ROJO "\x1b[31m"
 
-int modo_un_jugador(char tablero[3][3]);
-int modo_dos_jugadores();
+int menu();
+int seleccionar_simbolos(char *apt_simbolo_1, char *apt_simbolo_2);
+int imprimir_tablero(char tablero[3][3]);
+int registrar_tirada(char tablero[3][3], bool *apt_turno, int jugadores, char simbolo_1, char simbolo_2);
+int comprobar_tablero(char tablero[3][3], bool turno);
+
+int inicializar_juego(char tablero[3][3], int jugadores);
 
 
 
@@ -21,8 +25,7 @@ int main(int argc, char const *argv[])
             {' ', ' ', ' '},
             {' ', ' ', ' '}
         };
-
-    menu() ? modo_dos_jugadores(matriz) : modo_un_jugador(matriz);
+    menu() ? inicializar_juego(matriz, 2) : inicializar_juego(matriz, 1);
 
     return 0;
 }
@@ -62,10 +65,10 @@ int imprimir_tablero(char tablero[3][3])
     return 0;
 }
 
-int registrar_tirada(char tablero[3][3], bool *apt_turno, int modo) 
+int registrar_tirada(char tablero[3][3], bool *apt_turno, int jugadores, char simbolo_1, char simbolo_2) 
 {
     int columna, fila, error = 0;
-    if(modo == 1) 
+    if(jugadores == 1) 
     {
         if(*apt_turno == true) 
         {
@@ -74,16 +77,19 @@ int registrar_tirada(char tablero[3][3], bool *apt_turno, int modo)
             {
                 if(error)
                 {
-                    printf("Posicion invalida,\n");
+                    system("@cls||clear");
+                    printf(COLOR_ROJO"Posicion invalida\n"COLOR_RESET);
                     imprimir_tablero(tablero);
                 }
-                printf("¿Donde desea tirar?\nNumero de columna:\n");
-                scanf("%d", &columna);
-                printf("Numero de fila:\n");
+                printf("Turno del jugador numero %d\n\n", *apt_turno ? 1 : 2);
+                printf("¿Donde desea tirar?\nNumero de fila:\n");
                 scanf("%d", &fila);
+                printf("Numero de columna:\n");
+                scanf("%d", &columna);
                 error = 1;
-            } while (tablero[fila][columna] != ' ');
-            tablero[fila][columna] = 'x';
+                printf("\n%d %d\n", fila, columna);
+            } while (tablero[fila][columna] != ' ' || fila < 0 || columna < 0 || fila > 2 || columna > 2);
+            tablero[fila][columna] = simbolo_1;
             *apt_turno = false;
         }else 
         {
@@ -93,8 +99,8 @@ int registrar_tirada(char tablero[3][3], bool *apt_turno, int modo)
                 srand (time(NULL)); 
                 r_columna = rand() % 3;
                 r_fila = rand() % 3;
-            } while (tablero[r_fila][r_columna] != ' ');
-            tablero[r_fila][r_columna] = 'o';
+            } while (tablero[r_fila][r_columna] != ' ' || r_fila < 0 || r_columna < 0 || r_fila > 2 || r_columna > 2);
+            tablero[r_fila][r_columna] = simbolo_2;
             *apt_turno = true;
         }
     }else
@@ -103,23 +109,24 @@ int registrar_tirada(char tablero[3][3], bool *apt_turno, int modo)
         {
             if(error)
             {
-                printf("Posicion invalida,\n");
+                system("@cls||clear");
+                printf(COLOR_ROJO"Posicion invalida\n"COLOR_RESET);
                 imprimir_tablero(tablero);
             }
+            printf("Turno del jugador numero %d\n\n", *apt_turno ? 1 : 2);
             printf("¿Donde desea tirar?\nNumero de columna:\n");
             scanf("%d", &columna);
             printf("Numero de fila:\n");
             scanf("%d", &fila);
             error = 1;
         } while (tablero[fila][columna] != ' ');
-
-        tablero[fila][columna] = *apt_turno ? 'o' : 'x';
+        tablero[fila][columna] = *apt_turno ? simbolo_1 : simbolo_2;
         *apt_turno = !*apt_turno;
     }
     return 0;
 }
 
-int comprobar_tablero(char tablero[3][3])
+int comprobar_tablero(char tablero[3][3], bool turno)
 {
     bool terminado = false;
     for (int i = 0; i < 3; i++)
@@ -146,7 +153,8 @@ int comprobar_tablero(char tablero[3][3])
     }
     if(terminado) 
     {
-        printf("Juego terminado\n");  
+        system("@cls||clear");
+        printf(COLOR_CYAN"Juego terminado\nGanador: Jugador %d\n"COLOR_RESET, turno ? 2 : 1);  
         return 1; 
     }else 
     {
@@ -154,29 +162,31 @@ int comprobar_tablero(char tablero[3][3])
     }
 }
 
-int modo_un_jugador(char tablero[3][3]) 
+int seleccionar_simbolos(char *apt_simbolo_1, char *apt_simbolo_2)
 {
-    bool turno_jugador = true;
-    printf("Modo un jugador seleccionado\n");
     do
     {
-        imprimir_tablero(tablero);
-        printf("\n");
-        registrar_tirada(tablero, &turno_jugador, 1);
-    } while (!comprobar_tablero(tablero));
-    imprimir_tablero(tablero);
+        printf("Ingresa el simbolo del jugador 1\n");
+        scanf(" %c", &(*apt_simbolo_1));
+        printf("Ingresa el simbolo del jugador 2\n");
+        scanf(" %c", &(*apt_simbolo_2));
+    } while (apt_simbolo_1 == apt_simbolo_2);
+        
+    return 0;
 }
 
-int modo_dos_jugadores(char tablero[3][3]) 
+int inicializar_juego(char tablero[3][3], int jugadores) 
 {
     bool turno_jugador = true;
-    printf("Modo de dos jugadores seleccionado\n");
+    char simbolo_1, simbolo_2;
+    seleccionar_simbolos(&simbolo_1, &simbolo_2);
     do
     {
+        system("@cls||clear");
         imprimir_tablero(tablero);
         printf("\n");
-        registrar_tirada(tablero, &turno_jugador, 2);
-    } while (!comprobar_tablero(tablero));
+        registrar_tirada(tablero, &turno_jugador, jugadores, simbolo_1, simbolo_2);
+    } while (!comprobar_tablero(tablero, turno_jugador));
     imprimir_tablero(tablero);
     return 0;
 }
