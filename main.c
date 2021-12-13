@@ -7,17 +7,24 @@
 #define COLOR_RESET "\x1b[0m"
 #define COLOR_ROJO "\x1b[31m"
 
-int menu();
-int seleccionar_simbolos(char *apt_simbolo_1, char *apt_simbolo_2);
+int menu(char tablero[3][3]);
+int crear_archivo(char tablero[3][3]);
+int seleccionar_simbolos();
 int imprimir_tablero(char tablero[3][3]);
-int registrar_tirada(char tablero[3][3], bool *apt_turno, int jugadores, char simbolo_1, char simbolo_2);
 int comprobar_tablero(char tablero[3][3], bool turno);
+int registrar_tirada(char tablero[3][3], bool *apt_turno, int jugadores);
 
+int reiniciar_juego();
 int inicializar_juego(char tablero[3][3], int jugadores);
 
+struct simbolos
+{
+    char simbolo_1;
+    char simbolo_2;
+}simbolos;
 
 
-int main(int argc, char const *argv[])
+int main()
 {
     char matriz[3][3] = 
         {   
@@ -25,19 +32,54 @@ int main(int argc, char const *argv[])
             {' ', ' ', ' '},
             {' ', ' ', ' '}
         };
-    menu() ? inicializar_juego(matriz, 2) : inicializar_juego(matriz, 1);
-
+    switch (menu(matriz))   
+    {
+    case -1:
+        return 0;
+        break;
+    case 0:
+        inicializar_juego(matriz, 1); 
+        break;
+    case 1:
+        inicializar_juego(matriz, 2); 
+        break;
+    }
     return 0;
 }
 
-int menu(void) {
+int menu(char tablero[3][3]) {
+    char eleccion;
     int num;
-    printf("Numero de jugadores (1) (2)\n");
     do
     {
+        printf("¿Desea jugarlo en computadora? [s/n]\n");
+        scanf(" %c", &eleccion);
+    } while (!eleccion == 's' || !eleccion == 'n');
+
+    if(eleccion == 'n')
+    {
+        crear_archivo(tablero);
+        return -1;
+    }
+    do
+    {
+        printf("Numero de jugadores (1) (2)\n");
         scanf("%d", &num);
     } while (num != 1 && num != 2);
     return num == 1 ? 0 : 1;
+}
+
+int crear_archivo(char tablero[3][3])
+{
+    printf("¡¡Archivo txt generado con exito!!\n");
+    freopen("juego_gato.txt", "w", stdout);
+    printf("|   |   |   |\n");
+    printf("-------------\n");
+    printf("|   |   |   |\n");
+    printf("-------------\n");
+    printf("|   |   |   |\n");
+    fclose(stdout);
+    return 0;
 }
 
 int imprimir_tablero(char tablero[3][3]) 
@@ -65,7 +107,7 @@ int imprimir_tablero(char tablero[3][3])
     return 0;
 }
 
-int registrar_tirada(char tablero[3][3], bool *apt_turno, int jugadores, char simbolo_1, char simbolo_2) 
+int registrar_tirada(char tablero[3][3], bool *apt_turno, int jugadores) 
 {
     int columna, fila, error = 0;
     if(jugadores == 1) 
@@ -89,7 +131,7 @@ int registrar_tirada(char tablero[3][3], bool *apt_turno, int jugadores, char si
                 error = 1;
                 printf("\n%d %d\n", fila, columna);
             } while (tablero[fila][columna] != ' ' || fila < 0 || columna < 0 || fila > 2 || columna > 2);
-            tablero[fila][columna] = simbolo_1;
+            tablero[fila][columna] = simbolos.simbolo_1;
             *apt_turno = false;
         }else 
         {
@@ -100,7 +142,7 @@ int registrar_tirada(char tablero[3][3], bool *apt_turno, int jugadores, char si
                 r_columna = rand() % 3;
                 r_fila = rand() % 3;
             } while (tablero[r_fila][r_columna] != ' ' || r_fila < 0 || r_columna < 0 || r_fila > 2 || r_columna > 2);
-            tablero[r_fila][r_columna] = simbolo_2;
+            tablero[r_fila][r_columna] = simbolos.simbolo_2;
             *apt_turno = true;
         }
     }else
@@ -114,13 +156,13 @@ int registrar_tirada(char tablero[3][3], bool *apt_turno, int jugadores, char si
                 imprimir_tablero(tablero);
             }
             printf("Turno del jugador numero %d\n\n", *apt_turno ? 1 : 2);
-            printf("¿Donde desea tirar?\nNumero de columna:\n");
-            scanf("%d", &columna);
-            printf("Numero de fila:\n");
+            printf("¿Donde desea tirar?\nNumero de fila:\n");
             scanf("%d", &fila);
+            printf("Numero de columna:\n");
+            scanf("%d", &columna);
             error = 1;
         } while (tablero[fila][columna] != ' ');
-        tablero[fila][columna] = *apt_turno ? simbolo_1 : simbolo_2;
+        tablero[fila][columna] = *apt_turno ? simbolos.simbolo_1 : simbolos.simbolo_2;
         *apt_turno = !*apt_turno;
     }
     return 0;
@@ -162,31 +204,42 @@ int comprobar_tablero(char tablero[3][3], bool turno)
     }
 }
 
-int seleccionar_simbolos(char *apt_simbolo_1, char *apt_simbolo_2)
+int seleccionar_simbolos()
 {
     do
     {
         printf("Ingresa el simbolo del jugador 1\n");
-        scanf(" %c", &(*apt_simbolo_1));
+        scanf(" %c", &simbolos.simbolo_1);
         printf("Ingresa el simbolo del jugador 2\n");
-        scanf(" %c", &(*apt_simbolo_2));
-    } while (apt_simbolo_1 == apt_simbolo_2);
-        
+        scanf(" %c", &simbolos.simbolo_2);
+    } while (simbolos.simbolo_1 == simbolos.simbolo_2);
+
     return 0;
+}
+
+int reiniciar_juego()
+{
+    char eleccion;
+    do
+    {
+        printf("¿Desea volver a jugar?[s/n]\n");
+        scanf(" %c", &eleccion);
+    } while (!eleccion == 's' || !eleccion == 'n');
+    return eleccion == 's' ? 1 : 0;
 }
 
 int inicializar_juego(char tablero[3][3], int jugadores) 
 {
     bool turno_jugador = true;
-    char simbolo_1, simbolo_2;
-    seleccionar_simbolos(&simbolo_1, &simbolo_2);
+    seleccionar_simbolos();
     do
     {
         system("@cls||clear");
         imprimir_tablero(tablero);
         printf("\n");
-        registrar_tirada(tablero, &turno_jugador, jugadores, simbolo_1, simbolo_2);
+        registrar_tirada(tablero, &turno_jugador, jugadores);
     } while (!comprobar_tablero(tablero, turno_jugador));
     imprimir_tablero(tablero);
+    return reiniciar_juego() ? main() : 0;
     return 0;
 }
