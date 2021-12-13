@@ -15,6 +15,7 @@ int seleccionar_simbolos();
 int imprimir_tablero(char tablero[3][3]);
 int comprobar_tablero(char tablero[3][3], bool turno, int turnos);
 int registrar_tirada(char tablero[3][3], bool *apt_turno, int jugadores);
+int obtener_tips(char tablero[3][3], char simbolo_actual, char simbolo_contrario);
 
 int reiniciar_juego();
 int inicializar_juego(char tablero[3][3], int jugadores);
@@ -116,6 +117,7 @@ int imprimir_tablero(char tablero[3][3])
 int registrar_tirada(char tablero[3][3], bool *apt_turno, int jugadores) 
 {
     int columna, fila, error = 0;
+    char simbolo_1, simbolo_2;
     //filtrar por  numero de jugadores
     if(jugadores == 1) 
     {
@@ -128,10 +130,17 @@ int registrar_tirada(char tablero[3][3], bool *apt_turno, int jugadores)
                 if(error)
                 {
                     system("@cls||clear");
-                    printf(COLOR_ROJO"Posicion invalida\n"COLOR_RESET);
+                    if (columna == 4 && fila == 4)
+                    {
+                        obtener_tips(tablero, simbolos.simbolo_1, simbolos.simbolo_2);
+                    }else
+                    {
+                        printf(COLOR_ROJO"Posicion invalida\n"COLOR_RESET);
+                    }
                     imprimir_tablero(tablero);
                 }
                 //obtener fila y columna y comprobar que sean posiciones validas en el tablero
+                printf("Para obtener un consejo inserte 4 4\n");
                 printf("Turno del jugador numero %d\n\n", *apt_turno ? 1 : 2);
                 printf("¿Donde desea tirar?\nNumero de fila:\n");
                 scanf("%d", &fila);
@@ -163,7 +172,23 @@ int registrar_tirada(char tablero[3][3], bool *apt_turno, int jugadores)
             if(error)
             {
                 system("@cls||clear");
-                printf(COLOR_ROJO"Posicion invalida\n"COLOR_RESET);
+                if(columna == 4 && fila == 4)
+                {
+                    //Determinar el simbolo del jugador actual
+                    if(*apt_turno)
+                    {
+                        simbolo_1 = simbolos.simbolo_1;
+                        simbolo_2 = simbolos.simbolo_2;
+                    }else
+                    {
+                        simbolo_1 = simbolos.simbolo_2;
+                        simbolo_2 = simbolos.simbolo_1;
+                    }
+                    obtener_tips(tablero, simbolo_1, simbolo_2);
+                }else
+                {
+                    printf(COLOR_ROJO"Posicion invalida\n"COLOR_RESET);
+                }
                 imprimir_tablero(tablero);
             }
             //obtener fila y columnas
@@ -248,6 +273,73 @@ int reiniciar_juego()
         scanf(" %c", &eleccion);
     } while (!eleccion == 's' || !eleccion == 'n');
     return eleccion == 's' ? 1 : 0;
+}
+
+int obtener_tips(char tablero[3][3], char simbolo_actual, char simbolo_contrario) 
+{
+    for (int i = 0; i < 3; i++)
+    {
+        for (int j = 0; j < 3; j++)
+        {
+            //verificar si hay casillas disponibles para ganar de manera inmediata
+            if(tablero[i][j] == simbolo_actual)
+            {
+                if(tablero[i][j] == tablero[i][j+1] && tablero[i][j+2] == ' ')
+                {
+                    printf(COLOR_CYAN"¡TIP!\n"COLOR_RESET);
+                    printf("Posibilidad de ganar si se tira en %d %d\n", i, j+2);
+                    return 0;
+                }
+                if(tablero[i][j] == tablero[i+1][j] && tablero[i+2][j] == ' ')
+                {
+                    printf(COLOR_CYAN"¡TIP!\n"COLOR_RESET);
+                    printf("Posibilidad de ganar si se tira en %d %d\n", i+2, j);
+                    return 0;
+                }
+                if(i == 0 && j == 0 && tablero[i][j] == tablero[i+1][j+1] && tablero[i+2][j+2] == ' ')
+                {
+                    printf(COLOR_CYAN"¡TIP!\n"COLOR_RESET);
+                    printf("Posibilidad de ganar si se tira en %d %d\n", i+2, j+2);
+                    return 0;
+                }
+                if(i == 0 && j == 2 && tablero[i][j] == tablero[i+1][j-1] && tablero[i+2][j-2] == ' ')
+                {
+                    printf(COLOR_CYAN"¡TIP!\n"COLOR_RESET);
+                    printf("Posibilidad de ganar si se tira en %d %d\n", i+2, j-2);
+                    return 0;
+                }
+            }
+            if (tablero[i][j] == simbolo_contrario)
+            {
+                if(tablero[i][j] == tablero[i][j+1] && tablero[i][j+2] == ' ')
+                {
+                    printf(COLOR_ROJO"!ADVERTENCIA!\n"COLOR_RESET);
+                    printf("Posibilidad de perder en %d %d\n", i, j+2);
+                    return 0;
+                }
+                if(tablero[i][j] == tablero[i+1][j] && tablero[i+2][j] == ' ')
+                {
+                    printf(COLOR_ROJO"!ADVERTENCIA!\n"COLOR_RESET);
+                    printf("Posibilidad de perder en %d %d\n", i+2, j);
+                    return 0;
+                }
+                if(i == 0 && j == 0 && tablero[i][j] == tablero[i+1][j+1] && tablero[i+2][j+2] == ' ')
+                {
+                    printf(COLOR_ROJO"!ADVERTENCIA!\n"COLOR_RESET);
+                    printf("Posibilidad de perder en %d %d\n", i+2, j+2);
+                    return 0;
+                }
+                if(i == 0 && j == 2 && tablero[i][j] == tablero[i+1][j-1] && tablero[i+2][j-2] == ' ')
+                {
+                    printf(COLOR_ROJO"!ADVERTENCIA!\n"COLOR_RESET);
+                    printf("Posibilidad de perder en %d %d\n", i+2, j-2);
+                    return 0;
+                }
+            }
+        }
+    }
+    printf("Sin Posibilidad de ganar de manera inmediata, y sin peligro de perder\n");
+    return 0;
 }
 
 int inicializar_juego(char tablero[3][3], int jugadores) 
